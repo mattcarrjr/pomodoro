@@ -1,0 +1,54 @@
+#ifndef UI_H
+#define UI_H
+
+#include "timer.h"
+#include <stdbool.h>
+
+/* Color themes */
+typedef enum {
+    THEME_GREEN,
+    THEME_AMBER,
+    THEME_CYAN,
+    THEME_WHITE
+} ColorTheme;
+
+/* UI context */
+typedef struct {
+    ColorTheme theme;
+    int term_width;
+    int term_height;
+    bool needs_redraw;
+    bool show_help;
+} UIContext;
+
+/* Initialize ncurses and UI */
+int ui_init(UIContext *ctx, ColorTheme theme);
+
+/* Cleanup ncurses */
+void ui_cleanup(void);
+
+/* Handle terminal resize */
+void ui_handle_resize(UIContext *ctx);
+
+/* Draw the complete interface */
+void ui_draw(UIContext *ctx, TimerContext *timer);
+
+/* Draw completion alert overlay */
+void ui_draw_alert(UIContext *ctx, TimerContext *timer);
+
+/* Get keyboard input (non-blocking) */
+int ui_get_input(void);
+
+/* Set color theme */
+void ui_set_theme(UIContext *ctx, ColorTheme theme);
+
+/* Key constants (prefixed to avoid ncurses conflicts) */
+#define POMO_KEY_QUIT    'q'
+#define POMO_KEY_START   's'
+#define POMO_KEY_PAUSE   'p'
+#define POMO_KEY_RESET   'r'
+#define POMO_KEY_CONFIG  'c'
+#define POMO_KEY_HELP    'h'
+#define POMO_KEY_ADVANCE ' '  /* spacebar to acknowledge and advance */
+
+#endif /* UI_H */

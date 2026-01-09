@@ -1,0 +1,23 @@
+# Pomodoro Timer Configuration
+# Copy this file to ~/.pomodororc
+
+# Work duration in minutes (default: 25)
+work_duration = 25
+
+# Short break duration in minutes (default: 5)
+short_break = 5
+
+# Long break duration in minutes (default: 60)
+long_break = 60
+
+# Number of work cycles before a long break (default: 4)
+cycles = 4
+
+# Color theme: green, amber, cyan, white (default: green)
+theme = green
+
+# Enable sound notifications (default: true)
+sound_enabled = true
+
+# Directory containing sound files (default: ./sounds)
+# sound_dir = ~/.config/pomodoro/sounds
