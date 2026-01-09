@@ -32,6 +32,7 @@ typedef struct {
     int duration_seconds;       /* current session duration */
     int elapsed_paused;         /* accumulated pause time */
     TimerConfig config;
+    char current_task[256];     /* current task being worked on */
 } TimerContext;
 
 /* Initialize timer with default or custom config */
@@ -66,5 +67,8 @@ const char *timer_state_string(TimerState state);
 
 /* Get default configuration */
 TimerConfig timer_default_config(void);
+
+/* Set current task name */
+void timer_set_task(TimerContext *ctx, const char *task);
 
 #endif /* TIMER_H */

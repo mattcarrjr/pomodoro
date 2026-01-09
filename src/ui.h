@@ -4,6 +4,9 @@
 #include "timer.h"
 #include <stdbool.h>
 
+/* Forward declaration to avoid circular dependency */
+typedef struct AppConfig AppConfig;
+
 /* Color themes */
 typedef enum {
     THEME_GREEN,
@@ -19,6 +22,7 @@ typedef struct {
     int term_height;
     bool needs_redraw;
     bool show_help;
+    bool in_config_menu;
 } UIContext;
 
 /* Initialize ncurses and UI */
@@ -41,6 +45,13 @@ int ui_get_input(void);
 
 /* Set color theme */
 void ui_set_theme(UIContext *ctx, ColorTheme theme);
+
+/* Prompt user for task name */
+bool ui_prompt_task_name(char *task_buffer, size_t buffer_size);
+
+/* Config menu functions */
+void ui_draw_config_menu(UIContext *ctx, AppConfig *config, int selected_item, bool editing);
+int ui_handle_config_input(int ch, AppConfig *config, int *selected_item, bool *editing, bool *needs_save);
 
 /* Key constants (prefixed to avoid ncurses conflicts) */
 #define POMO_KEY_QUIT    'q'

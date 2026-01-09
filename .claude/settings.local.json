@@ -4,7 +4,11 @@
       "WebSearch",
       "Bash(mkdir:*)",
       "Bash(make clean:*)",
-      "Bash(make)"
+      "Bash(make)",
+      "Bash(gcc:*)",
+      "Bash(rpm -q:*)",
+      "Bash(echo:*)",
+      "Bash(pkg-config:*)"
     ]
   }
 }

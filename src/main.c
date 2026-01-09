@@ -134,6 +134,15 @@ int main(int argc, char **argv)
                 break;
 
             case POMO_KEY_START:
+                /* Prompt for task name if starting from idle with no task set */
+                if (timer.state == STATE_IDLE && timer.current_task[0] == '\0') {
+                    char task_name[256];
+                    if (ui_prompt_task_name(task_name, sizeof(task_name))) {
+                        timer_set_task(&timer, task_name);
+                    }
+                    /* Redraw UI after prompt */
+                    ui.needs_redraw = true;
+                }
                 timer_start(&timer);
                 break;
 
@@ -144,6 +153,76 @@ int main(int argc, char **argv)
             case POMO_KEY_RESET:
                 timer_reset(&timer);
                 break;
+
+            case POMO_KEY_CONFIG: {
+                /* Enter config menu */
+                int selected_item = 0;
+                bool editing = false;
+                bool needs_save = false;
+                bool in_config = true;
+
+                /* Save original timer settings to detect changes */
+                TimerConfig original_timer_config = config.timer;
+                ColorTheme original_theme = config.theme;
+
+                /* Config menu loop */
+                while (in_config && running) {
+                    ui_draw_config_menu(&ui, &config, selected_item, editing);
+
+                    /* Handle resize in config menu */
+                    if (resize_pending) {
+                        resize_pending = 0;
+                        ui_handle_resize(&ui);
+                    }
+
+                    /* Get input with blocking */
+                    nodelay(stdscr, FALSE);
+                    int config_ch = getch();
+                    nodelay(stdscr, TRUE);
+
+                    /* Handle config input */
+                    int result = ui_handle_config_input(config_ch, &config, &selected_item, &editing, &needs_save);
+
+                    if (result == 1) {
+                        /* Save */
+                        char config_path[512];
+                        snprintf(config_path, sizeof(config_path), "%s/.pomodororc", getenv("HOME"));
+                        if (config_save(&config, config_path) == 0) {
+                            /* Check if timer settings changed */
+                            bool timer_settings_changed = (
+                                original_timer_config.work_duration != config.timer.work_duration ||
+                                original_timer_config.short_break != config.timer.short_break ||
+                                original_timer_config.long_break != config.timer.long_break ||
+                                original_timer_config.cycles_before_long != config.timer.cycles_before_long
+                            );
+
+                            /* If timer settings changed during active session, reset timer */
+                            if (timer_settings_changed && timer.state != STATE_IDLE) {
+                                timer.config = config.timer;
+                                timer_reset(&timer);
+                            } else {
+                                /* Just update config */
+                                timer.config = config.timer;
+                            }
+
+                            /* Apply theme change immediately */
+                            if (original_theme != config.theme) {
+                                ui_set_theme(&ui, config.theme);
+                            }
+                        }
+                        in_config = false;
+                    } else if (result == -1) {
+                        /* Cancel - restore original config */
+                        config.timer = original_timer_config;
+                        config.theme = original_theme;
+                        in_config = false;
+                    }
+                }
+
+                /* Redraw main UI */
+                ui.needs_redraw = true;
+                break;
+            }
 
             case KEY_RESIZE:
                 ui_handle_resize(&ui);

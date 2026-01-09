@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 /* Full application configuration */
-typedef struct {
+typedef struct AppConfig {
     TimerConfig timer;
     ColorTheme theme;
     bool sound_enabled;
@@ -15,6 +15,9 @@ typedef struct {
 
 /* Load configuration from file and command-line args */
 int config_load(AppConfig *config, int argc, char **argv);
+
+/* Save configuration to file */
+int config_save(const AppConfig *config, const char *path);
 
 /* Get default configuration */
 AppConfig config_default(void);

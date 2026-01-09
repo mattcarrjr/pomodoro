@@ -1,5 +1,6 @@
 #include "timer.h"
 #include <string.h>
+#include <stdio.h>
 
 static bool session_completed = false;
 
@@ -27,12 +28,14 @@ void timer_init(TimerContext *ctx, TimerConfig *config)
     ctx->state = STATE_IDLE;
     ctx->current_cycle = 1;
     ctx->total_cycles_completed = 0;
+    ctx->current_task[0] = '\0';  /* Initialize task name as empty */
 }
 
 void timer_reset(TimerContext *ctx)
 {
     TimerConfig saved_config = ctx->config;
     timer_init(ctx, &saved_config);
+    /* timer_init already clears the task name */
 }
 
 void timer_start(TimerContext *ctx)
@@ -157,5 +160,14 @@ const char *timer_state_string(TimerState state)
         case STATE_LONG_BREAK:  return "LONG BREAK";
         case STATE_PAUSED:      return "PAUSED";
         default:                return "UNKNOWN";
+    }
+}
+
+void timer_set_task(TimerContext *ctx, const char *task)
+{
+    if (task && task[0] != '\0') {
+        snprintf(ctx->current_task, sizeof(ctx->current_task), "%s", task);
+    } else {
+        ctx->current_task[0] = '\0';
     }
 }

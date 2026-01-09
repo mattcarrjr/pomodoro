@@ -2,7 +2,7 @@
 
 CC = gcc
 CFLAGS = -Wall -Wextra -O2 -std=c99
-LDFLAGS = -lncurses
+LDFLAGS = -lncursesw
 
 # macOS with Homebrew ncurses (if system ncurses is too old)
 UNAME_S := $(shell uname -s)
@@ -10,10 +10,10 @@ ifeq ($(UNAME_S),Darwin)
     # Check if Homebrew ncurses exists
     ifneq ($(wildcard /opt/homebrew/opt/ncurses/.),)
         CFLAGS += -I/opt/homebrew/opt/ncurses/include
-        LDFLAGS = -L/opt/homebrew/opt/ncurses/lib -lncurses
+        LDFLAGS = -L/opt/homebrew/opt/ncurses/lib -lncursesw
     else ifneq ($(wildcard /usr/local/opt/ncurses/.),)
         CFLAGS += -I/usr/local/opt/ncurses/include
-        LDFLAGS = -L/usr/local/opt/ncurses/lib -lncurses
+        LDFLAGS = -L/usr/local/opt/ncurses/lib -lncursesw
     endif
 endif
 
