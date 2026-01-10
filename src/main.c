@@ -3,7 +3,9 @@
  * A retro terminal-based Pomodoro timer using ncurses
  */
 
+#define _POSIX_C_SOURCE 200809L
 #define _XOPEN_SOURCE 700
+#define _DEFAULT_SOURCE
 #define _DARWIN_C_SOURCE
 
 #include <stdio.h>

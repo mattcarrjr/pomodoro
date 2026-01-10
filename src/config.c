@@ -15,7 +15,7 @@ AppConfig config_default(void)
             .long_break = 60,
             .cycles_before_long = 4
         },
-        .theme = THEME_GREEN,
+        .theme = THEME_MOCHA,
         .sound_enabled = true,
         .sound_dir = "./sounds"
     };
@@ -65,14 +65,17 @@ static int parse_config_file(AppConfig *config, const char *path)
         } else if (strcmp(key, "cycles") == 0) {
             config->timer.cycles_before_long = atoi(value);
         } else if (strcmp(key, "theme") == 0) {
-            if (strcmp(value, "green") == 0) {
-                config->theme = THEME_GREEN;
-            } else if (strcmp(value, "amber") == 0) {
-                config->theme = THEME_AMBER;
-            } else if (strcmp(value, "cyan") == 0) {
-                config->theme = THEME_CYAN;
-            } else if (strcmp(value, "white") == 0) {
-                config->theme = THEME_WHITE;
+            if (strcmp(value, "mocha") == 0) {
+                config->theme = THEME_MOCHA;
+            } else if (strcmp(value, "latte") == 0) {
+                config->theme = THEME_LATTE;
+            } else if (strcmp(value, "frappe") == 0) {
+                config->theme = THEME_FRAPPE;
+            } else if (strcmp(value, "macchiato") == 0) {
+                config->theme = THEME_MACCHIATO;
+            } else {
+                /* Backwards compatibility: map old theme names to Mocha */
+                config->theme = THEME_MOCHA;
             }
         } else if (strcmp(key, "sound_enabled") == 0) {
             config->sound_enabled = (strcmp(value, "true") == 0 ||
@@ -97,7 +100,7 @@ void config_print_usage(const char *prog_name)
     printf("  -s MINS    Short break duration in minutes (default: 5)\n");
     printf("  -l MINS    Long break duration in minutes (default: 60)\n");
     printf("  -c NUM     Cycles before long break (default: 4)\n");
-    printf("  -t THEME   Color theme: green, amber, cyan, white (default: green)\n");
+    printf("  -t THEME   Color theme: mocha, latte, frappe, macchiato (default: mocha)\n");
     printf("  -d DIR     Sound files directory\n");
     printf("  -n         Disable sounds (use terminal bell)\n");
     printf("  -h         Show this help message\n");
@@ -147,14 +150,17 @@ int config_load(AppConfig *config, int argc, char **argv)
                 config->timer.cycles_before_long = atoi(optarg);
                 break;
             case 't':
-                if (strcmp(optarg, "green") == 0) {
-                    config->theme = THEME_GREEN;
-                } else if (strcmp(optarg, "amber") == 0) {
-                    config->theme = THEME_AMBER;
-                } else if (strcmp(optarg, "cyan") == 0) {
-                    config->theme = THEME_CYAN;
-                } else if (strcmp(optarg, "white") == 0) {
-                    config->theme = THEME_WHITE;
+                if (strcmp(optarg, "mocha") == 0) {
+                    config->theme = THEME_MOCHA;
+                } else if (strcmp(optarg, "latte") == 0) {
+                    config->theme = THEME_LATTE;
+                } else if (strcmp(optarg, "frappe") == 0) {
+                    config->theme = THEME_FRAPPE;
+                } else if (strcmp(optarg, "macchiato") == 0) {
+                    config->theme = THEME_MACCHIATO;
+                } else {
+                    /* Default to mocha for unrecognized themes */
+                    config->theme = THEME_MOCHA;
                 }
                 break;
             case 'd':
@@ -201,23 +207,23 @@ int config_save(const AppConfig *config, const char *path)
     fprintf(fp, "cycles_before_long=%d\n\n", config->timer.cycles_before_long);
 
     /* Write theme setting */
-    fprintf(fp, "# Color theme: green, amber, cyan, white\n");
+    fprintf(fp, "# Color theme: mocha, latte, frappe, macchiato (Catppuccin)\n");
     fprintf(fp, "theme=");
     switch (config->theme) {
-        case THEME_GREEN:
-            fprintf(fp, "green\n");
+        case THEME_MOCHA:
+            fprintf(fp, "mocha\n");
             break;
-        case THEME_AMBER:
-            fprintf(fp, "amber\n");
+        case THEME_LATTE:
+            fprintf(fp, "latte\n");
             break;
-        case THEME_CYAN:
-            fprintf(fp, "cyan\n");
+        case THEME_FRAPPE:
+            fprintf(fp, "frappe\n");
             break;
-        case THEME_WHITE:
-            fprintf(fp, "white\n");
+        case THEME_MACCHIATO:
+            fprintf(fp, "macchiato\n");
             break;
         default:
-            fprintf(fp, "green\n");
+            fprintf(fp, "mocha\n");
             break;
     }
     fprintf(fp, "\n");

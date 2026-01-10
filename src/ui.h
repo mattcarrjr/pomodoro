@@ -7,12 +7,12 @@
 /* Forward declaration to avoid circular dependency */
 typedef struct AppConfig AppConfig;
 
-/* Color themes */
+/* Color themes - Catppuccin variants */
 typedef enum {
-    THEME_GREEN,
-    THEME_AMBER,
-    THEME_CYAN,
-    THEME_WHITE
+    THEME_MOCHA,      /* Dark theme (default) */
+    THEME_LATTE,      /* Light theme */
+    THEME_FRAPPE,     /* Medium dark */
+    THEME_MACCHIATO   /* Medium dark alt */
 } ColorTheme;
 
 /* UI context */
