@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 
             /* Wait for spacebar to acknowledge */
             int ch;
-            while (running && (ch = ui_get_input()) != POMO_KEY_ADVANCE) {
+            while (running && (ch = ui_get_input()) != POMO_KEY_TOGGLE) {
                 if (ch == POMO_KEY_QUIT) {
                     running = 0;
                     break;
@@ -135,20 +135,41 @@ int main(int argc, char **argv)
                 running = 0;
                 break;
 
+            case POMO_KEY_TOGGLE:
+                /* Spacebar: start/pause toggle */
+                if (timer.state == STATE_IDLE) {
+                    /* Starting from idle - prompt for task name if not set */
+                    if (timer.current_task[0] == '\0') {
+                        char task_name[256];
+                        if (ui_prompt_task_name(task_name, sizeof(task_name))) {
+                            timer_set_task(&timer, task_name);
+                        }
+                        ui.needs_redraw = true;
+                    }
+                    timer_start(&timer);
+                } else if (timer.state == STATE_PAUSED) {
+                    /* Resume from pause */
+                    timer_toggle_pause(&timer);
+                } else {
+                    /* Pause running timer */
+                    timer_toggle_pause(&timer);
+                }
+                break;
+
             case POMO_KEY_START:
-                /* Prompt for task name if starting from idle with no task set */
+                /* 's' key also starts (for backwards compatibility) */
                 if (timer.state == STATE_IDLE && timer.current_task[0] == '\0') {
                     char task_name[256];
                     if (ui_prompt_task_name(task_name, sizeof(task_name))) {
                         timer_set_task(&timer, task_name);
                     }
-                    /* Redraw UI after prompt */
                     ui.needs_redraw = true;
                 }
                 timer_start(&timer);
                 break;
 
             case POMO_KEY_PAUSE:
+                /* 'p' key also pauses (for backwards compatibility) */
                 timer_toggle_pause(&timer);
                 break;
 
@@ -168,6 +189,7 @@ int main(int argc, char **argv)
                 ColorTheme original_theme = config.theme;
 
                 /* Config menu loop */
+                ColorTheme prev_theme = config.theme;
                 while (in_config && running) {
                     ui_draw_config_menu(&ui, &config, selected_item, editing);
 
@@ -182,8 +204,20 @@ int main(int argc, char **argv)
                     int config_ch = getch();
                     nodelay(stdscr, TRUE);
 
+                    /* Handle resize from getch */
+                    if (config_ch == KEY_RESIZE) {
+                        ui_handle_resize(&ui);
+                        continue;  /* Redraw and get input again */
+                    }
+
                     /* Handle config input */
                     int result = ui_handle_config_input(config_ch, &config, &selected_item, &editing, &needs_save);
+
+                    /* Apply theme change immediately as preview */
+                    if (config.theme != prev_theme) {
+                        ui_set_theme(&ui, config.theme);
+                        prev_theme = config.theme;
+                    }
 
                     if (result == 1) {
                         /* Save */
@@ -214,9 +248,10 @@ int main(int argc, char **argv)
                         }
                         in_config = false;
                     } else if (result == -1) {
-                        /* Cancel - restore original config */
+                        /* Cancel - restore original config and theme */
                         config.timer = original_timer_config;
                         config.theme = original_theme;
+                        ui_set_theme(&ui, original_theme);
                         in_config = false;
                     }
                 }

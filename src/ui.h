@@ -7,12 +7,14 @@
 /* Forward declaration to avoid circular dependency */
 typedef struct AppConfig AppConfig;
 
-/* Color themes - Catppuccin variants */
+/* Color themes */
 typedef enum {
-    THEME_MOCHA,      /* Dark theme (default) */
-    THEME_LATTE,      /* Light theme */
-    THEME_FRAPPE,     /* Medium dark */
-    THEME_MACCHIATO   /* Medium dark alt */
+    THEME_GREEN,
+    THEME_AMBER,
+    THEME_CYAN,
+    THEME_WHITE,
+    THEME_PURPLE,
+    THEME_RED
 } ColorTheme;
 
 /* UI context */
@@ -60,6 +62,6 @@ int ui_handle_config_input(int ch, AppConfig *config, int *selected_item, bool *
 #define POMO_KEY_RESET   'r'
 #define POMO_KEY_CONFIG  'c'
 #define POMO_KEY_HELP    'h'
-#define POMO_KEY_ADVANCE ' '  /* spacebar to acknowledge and advance */
+#define POMO_KEY_TOGGLE  ' '  /* spacebar to start/pause and acknowledge */
 
 #endif /* UI_H */

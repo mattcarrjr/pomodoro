@@ -15,7 +15,7 @@ A cross-platform terminal-based Pomodoro timer application that works on Linux (
 ```
 pomodoro/
 ├── src/
-│   ├── main.c      # Main application entry point
+│   ├── main.c      # Main application entry point and event loop
 │   ├── timer.c/h   # Timer logic and state management
 │   ├── ui.c/h      # ncurses-based UI rendering
 │   ├── sound.c/h   # Sound playback (platform-specific)
@@ -69,7 +69,7 @@ make clean && make
 ./pomodoro -w 30 -s 10 -l 90
 
 # Change theme
-./pomodoro -t amber    # Options: green, amber, cyan, white
+./pomodoro -t purple    # Options: green, amber, cyan, white, purple, red
 
 # Disable sounds (use terminal bell)
 ./pomodoro -n
@@ -79,11 +79,11 @@ make clean && make
 ```
 
 ### Interactive Controls
-- `s` - Start timer (prompts for task name if not set)
-- `p` - Pause/unpause
+- `SPACE` - Start timer / Pause/Resume / Acknowledge completion alerts
+- `s` - Start timer (legacy, same as spacebar)
+- `p` - Pause/unpause (legacy, same as spacebar)
 - `r` - Reset timer
 - `c` - Open config menu to change settings
-- `SPACE` - Acknowledge completion and advance to next phase
 - `q` - Quit
 
 ### Configuration File
@@ -100,30 +100,45 @@ sound_dir=./sounds
 
 ## Features
 
-### 1. Gradient Progress Bar
-The progress bar dynamically changes colors as you work through your session, providing visual feedback about time remaining:
+### 1. Color Themes
+Six color themes available, each applying a consistent color across all UI elements:
 
-- **0-50% complete**: Green (you're doing great, plenty of time)
-- **50-75% complete**: Yellow (halfway there, keep going)
-- **75-90% complete**: Orange (final stretch, stay focused)
-- **90-100% complete**: Red (almost done!)
+| Theme  | Color   | Best For |
+|--------|---------|----------|
+| green  | Green   | Default, easy on eyes |
+| amber  | Yellow  | Warm, retro feel |
+| cyan   | Cyan    | Cool, calming |
+| white  | White   | High contrast |
+| purple | Magenta | Unique, stylish |
+| red    | Red     | Bold, urgent |
 
-The gradient colors are **independent of your chosen theme** - they always use the same progression to provide consistent visual cues regardless of whether you're using green, amber, cyan, or white theme.
+Theme colors apply to:
+- Border and box-drawing characters
+- Title and status text
+- Large digit display
+- Progress bar (solid fill)
+- Percentage indicator
+- Task name and cycle counter
 
-### 2. Task Name Field
+### 2. Progress Bar
+A solid-color progress bar shows session completion:
+- Width matches the digit counter for visual alignment
+- Filled portion uses theme color as background
+- Unfilled portion uses dimmed checkerboard pattern
+- Percentage displayed in theme color to the right
+
+### 3. Task Name Field
 Track what you're working on during each Pomodoro session:
 
-- When you press **`s`** to start from IDLE, you'll be prompted: "Enter Task Name"
+- When you press **SPACE** to start from IDLE, you'll be prompted: "Enter Task Name"
 - Type your task description (e.g., "Write documentation", "Fix bug #123")
 - Press **Enter** to confirm or **Esc** to skip
-- The task name displays prominently **above the timer digits** during your work session
+- The task name displays centered between the header and timer digits
 - Task name persists through work/break cycles
 - Shows "Task: (none)" if no task was entered
 - Task name is cleared when you reset the timer with **`r`**
 
-**Future Enhancement**: Task logging for Obsidian integration is planned. This will automatically log completed sessions with timestamps and task names to a markdown file that can be imported into your Obsidian vault for tracking productivity.
-
-### 3. In-App Config Menu
+### 4. In-App Config Menu
 Change all your settings without leaving the application:
 
 **Access**: Press **`c`** at any time to open the settings menu
@@ -133,7 +148,7 @@ Change all your settings without leaving the application:
 - Short Break (minutes)
 - Long Break (minutes)
 - Cycles Before Long Break (number)
-- Theme (green, amber, cyan, white)
+- Theme (green, amber, cyan, white, purple, red)
 
 **Navigation**:
 - **↑/↓ or j/k**: Move between settings
@@ -144,34 +159,49 @@ Change all your settings without leaving the application:
 - **Esc**: Cancel changes and exit without saving
 
 **Behavior**:
-- **Theme changes** apply immediately when you save
+- **Theme changes preview immediately** as you cycle through options
+- Canceling with Esc restores the original theme
 - **Time setting changes** while timer is IDLE: Applied to next session
 - **Time setting changes** while timer is ACTIVE: Timer automatically resets to apply new durations
 - All saved settings persist between application runs via `~/.pomodororc`
 
-### Usage Example
+### 5. Responsive Terminal Resize
+The UI properly handles terminal window resizing:
+- All elements reposition and redraw when the terminal is resized
+- Works in both main view and config menu
+- Uses proper ncurses resize pattern (endwin/refresh) for reliable updates
 
-```bash
-# Start the app
-./pomodoro
+### 6. UI Layout
+The interface is carefully laid out for readability:
 
-# Press 's' to start
-# You'll see: "Enter Task Name"
-# Type: "Implement new feature"
-# Press Enter
-
-# Timer starts, showing:
-# Task: Implement new feature
-# 25:00 (with large block digits)
-# [=========>          ] (gradient progress bar)
-
-# Mid-session, press 'c' to adjust settings
-# Change work duration from 25 to 30 minutes
-# Press 's' to save
-# Timer resets to apply new 30-minute duration
-
-# Press 's' again to restart with updated settings
 ```
+┌─────────────────────────────────────────────────────────────────┐
+│  POMODORO TIMER                              [WORKING] 1/4      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│                     Task: Write documentation                   │
+│                                                                 │
+│                        ██  ██     ██  ██                        │
+│                       █  █   █   █  █ ██                        │
+│                       ████  █    ████  █                        │
+│                       █  █ █     █  █  █                        │
+│                       ██  █████  ██  █████                      │
+│                                                                 │
+│                       ████████████░░░░░░░░  75%                 │
+│                                                                 │
+│                        Total completed: 3                       │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│            [SPACE] Start/Pause  [R]eset  [C]onfig  [Q]uit       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+- **Header**: Title on left, state and cycle count on right
+- **Task**: Centered between header line and digit display
+- **Digits**: Large ASCII art timer, centered
+- **Progress bar**: Same width as digits, centered below
+- **Cycles counter**: Centered between progress bar and footer
+- **Footer**: Key bindings centered at bottom
 
 ## Cross-Platform Development Notes
 
@@ -188,6 +218,13 @@ This means you're trying to run a binary compiled for a different platform. For 
 - Linux binaries cannot run on macOS
 
 **Solution**: Always run `make clean && make` when switching between systems.
+
+### Cross-Platform Distribution
+To distribute for multiple platforms, you must build separately:
+- Build on Linux → `pomodoro-linux`
+- Build on macOS → `pomodoro-macos`
+
+Consider using GitHub Actions to automate builds for both platforms on each release.
 
 ### POSIX Compliance
 The code requires POSIX functions (getopt, fork, usleep, pid_t). When compiling with `-std=c99`, these require feature test macros:
@@ -246,34 +283,76 @@ sudo dnf install alsa-utils
 sudo apt install alsa-utils
 ```
 
+### UI becomes garbled on terminal resize
+**Problem**: Older versions had incomplete resize handling.
+
+**Solution**: Current version uses proper ncurses resize pattern with `endwin()` + `refresh()` before getting new dimensions. Ensure you have the latest code.
+
 ## Technical Implementation Notes
 
-### Gradient Progress Bar
-- **Files modified**: `src/ui.c`
-- **Implementation**: Added four new color pairs (PAIR_PROGRESS_GREEN, PAIR_PROGRESS_YELLOW, PAIR_PROGRESS_ORANGE, PAIR_PROGRESS_RED) initialized with fixed colors
-- **Logic**: `draw_progress_bar()` function calculates position percentage for each character and applies the appropriate color based on thresholds (50%, 75%, 90%)
-- **Note**: Uses A_BOLD attribute for orange to make it visually distinct from yellow
+### Color System
+- **Files**: `src/ui.c`, `src/ui.h`
+- **Implementation**: Uses ncurses 8-color palette with 7 color pairs
+- **Color pairs**:
+  - `PAIR_NORMAL` - Theme foreground on default background
+  - `PAIR_BORDER` - Theme color for borders
+  - `PAIR_TITLE` - Theme color for titles
+  - `PAIR_DIGITS` - Theme color for large digits
+  - `PAIR_PROGRESS` - Black text on theme color background (for filled bar)
+  - `PAIR_ALERT` - Red for alert dialogs
+  - `PAIR_DIM` - Black for unfilled progress bar
+- **Theme switching**: `ui_set_theme()` reinitializes all color pairs
+
+### Progress Bar
+- **Width calculation**: Matches digit display width: `(4 * digit_width()) + colon_width() + (3 * spacing)`
+- **Fill calculation**: `filled = (progress * bar_width) / 100`
+- **Filled portion**: Space characters with `PAIR_PROGRESS` (theme background)
+- **Unfilled portion**: `ACS_CKBOARD` (checkerboard) with `PAIR_DIM`
+
+### Terminal Resize Handling
+- **Signal**: `SIGWINCH` sets `resize_pending` flag
+- **KEY_RESIZE**: Also handled from `getch()` return value
+- **Handler pattern**:
+  ```c
+  void ui_handle_resize(UIContext *ctx) {
+      endwin();    // Suspend ncurses
+      refresh();   // Reinitialize ncurses with new size
+      getmaxyx(stdscr, ctx->term_height, ctx->term_width);
+      clear();
+      ctx->needs_redraw = true;
+  }
+  ```
 
 ### Task Name Field
-- **Files modified**: `src/timer.h`, `src/timer.c`, `src/ui.h`, `src/ui.c`, `src/main.c`
-- **Storage**: Added `char current_task[256]` field to `TimerContext` struct
-- **Input**: `ui_prompt_task_name()` function creates a centered dialog box with text input
-- **Display**: Task name rendered in `ui_draw()` above the timer digits
-- **Behavior**: Task cleared on reset, persists through work/break transitions
+- **Files**: `src/timer.h`, `src/timer.c`, `src/ui.c`, `src/main.c`
+- **Storage**: `char current_task[256]` field in `TimerContext` struct
+- **Input**: `ui_prompt_task_name()` creates modal dialog with text input
+- **Display**: Rendered in `ui_draw()` centered between header (y=4) and digit start
 
-### In-App Config Menu
-- **Files modified**: `src/config.h`, `src/config.c`, `src/ui.h`, `src/ui.c`, `src/main.c`
-- **Config saving**: `config_save()` function writes settings to `~/.pomodororc` in key=value format
-- **UI components**:
-  - `ui_draw_config_menu()`: Renders full-screen settings menu with navigation
-  - `ui_handle_config_input()`: Processes keyboard input for menu navigation and editing
-- **State management**: Main loop handles config menu mode, saves original settings, compares changes to determine if timer reset is needed
-- **Type compatibility**: Used forward declaration `typedef struct AppConfig AppConfig;` in `ui.h` to avoid circular dependency with `config.h`
+### Config Menu
+- **Files**: `src/config.h`, `src/config.c`, `src/ui.c`, `src/main.c`
+- **Theme preview**: Calls `ui_set_theme()` immediately when theme changes in edit mode
+- **Cancel behavior**: Restores original config and theme on Esc
+- **Config saving**: `config_save()` writes to `~/.pomodororc` in key=value format
 
 ### ncurses Wide Character Support
-- **Makefile change**: Changed from `-lncurses` to `-lncursesw` to enable UTF-8 character rendering
-- **Applies to**: Both Linux and macOS builds
-- **Result**: Unicode block characters (█) and box-drawing characters (╔═╗║╚╝) render correctly in timer digits
+- **Makefile**: Links with `-lncursesw` for UTF-8 support
+- **Locale**: `setlocale(LC_ALL, "")` called in `ui_init()`
+- **Result**: Proper rendering of Unicode box-drawing and block characters
+
+## Future Enhancements
+
+Potential features for future development:
+
+1. **Task logging for Obsidian** - Log completed sessions with timestamps and task names to markdown for productivity tracking
+
+2. **Sound customization** - Allow users to specify custom sound files in config
+
+3. **Statistics view** - Show daily/weekly productivity stats
+
+4. **Notification integration** - System notifications on timer completion
+
+5. **GitHub Actions CI** - Automated builds for Linux and macOS releases
 
 ## Development History
 
@@ -283,8 +362,19 @@ sudo apt install alsa-utils
   - Verified successful build on Rocky Linux 9.7 with gcc 11.5.0
 
 - **2026-01-09**: Major feature additions
-  - **Gradient Progress Bar**: Implemented color transitions (green→yellow→orange→red) based on progress percentage
-  - **Task Name Field**: Added task input prompt on timer start, displays above timer digits, provides foundation for future logging
-  - **In-App Config Menu**: Full settings editor accessible with 'c' key, saves to `~/.pomodororc`, handles theme changes and timer resets intelligently
-  - **Unicode Fix**: Switched to ncursesw for proper UTF-8 rendering of timer digits
-  - All features tested and integrated on Rocky Linux 9.7
+  - Gradient progress bar (later simplified)
+  - Task name field with input prompt
+  - In-app config menu with live editing
+  - Unicode fix with ncursesw
+
+- **2026-01-10**: UI refinements and simplification
+  - Replaced gradient progress bar with solid theme-colored bar
+  - Simplified to 6 color themes: green, amber, cyan, white, purple, red
+  - Spacebar as primary start/pause/acknowledge control
+  - Progress bar width matches digit counter, brackets removed
+  - Percentage indicator in theme color
+  - Task header centered between top UI and digits
+  - Cycles counter centered between progress bar and footer
+  - Immediate theme preview in config menu
+  - Proper terminal resize handling with endwin/refresh pattern
+  - Footer updated: `[SPACE] Start/Pause  [R]eset  [C]onfig  [Q]uit`

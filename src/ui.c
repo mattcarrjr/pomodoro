@@ -14,262 +14,48 @@
 #define PAIR_PROGRESS 5
 #define PAIR_ALERT    6
 #define PAIR_DIM      7
-/* Dynamic gradient color pairs interpolated from Catppuccin accent colors */
-#define PAIR_GRADIENT_BASE  8
-#define GRADIENT_STEPS 24  /* Smooth interpolation between Catppuccin anchors */
 
 /* Minimum terminal size */
 #define MIN_WIDTH  60
 #define MIN_HEIGHT 20
-
-/* Catppuccin Mocha palette (256-color approximations) */
-#define MOCHA_ROSEWATER 224
-#define MOCHA_FLAMINGO  217
-#define MOCHA_PINK      218
-#define MOCHA_MAUVE     183
-#define MOCHA_RED       210
-#define MOCHA_MAROON    181
-#define MOCHA_PEACH     216
-#define MOCHA_YELLOW    223
-#define MOCHA_GREEN     150
-#define MOCHA_TEAL      116
-#define MOCHA_SKY       117
-#define MOCHA_SAPPHIRE  75
-#define MOCHA_BLUE      111
-#define MOCHA_LAVENDER  147
-#define MOCHA_TEXT      189
-#define MOCHA_SUBTEXT1  146
-#define MOCHA_OVERLAY2  102
-#define MOCHA_SURFACE0  237
-#define MOCHA_BASE      235
-
-/* Catppuccin Latte palette (light theme, 256-color approximations) */
-#define LATTE_ROSEWATER 181
-#define LATTE_FLAMINGO  174
-#define LATTE_PINK      218
-#define LATTE_MAUVE     141
-#define LATTE_RED       167
-#define LATTE_MAROON    168
-#define LATTE_PEACH     173
-#define LATTE_YELLOW    179
-#define LATTE_GREEN     114
-#define LATTE_TEAL      37
-#define LATTE_SKY       74
-#define LATTE_SAPPHIRE  32
-#define LATTE_BLUE      68
-#define LATTE_LAVENDER  105
-#define LATTE_TEXT      236
-#define LATTE_SUBTEXT1  241
-#define LATTE_OVERLAY2  249
-#define LATTE_SURFACE0  254
-#define LATTE_BASE      231
-
-/* Catppuccin Frappe palette (256-color approximations) */
-#define FRAPPE_ROSEWATER 224
-#define FRAPPE_FLAMINGO  217
-#define FRAPPE_PINK      218
-#define FRAPPE_MAUVE     183
-#define FRAPPE_RED       210
-#define FRAPPE_MAROON    181
-#define FRAPPE_PEACH     216
-#define FRAPPE_YELLOW    223
-#define FRAPPE_GREEN     150
-#define FRAPPE_TEAL      116
-#define FRAPPE_SKY       117
-#define FRAPPE_SAPPHIRE  75
-#define FRAPPE_BLUE      111
-#define FRAPPE_LAVENDER  147
-#define FRAPPE_TEXT      188
-#define FRAPPE_SUBTEXT1  145
-#define FRAPPE_OVERLAY2  102
-#define FRAPPE_SURFACE0  238
-#define FRAPPE_BASE      236
-
-/* Catppuccin Macchiato palette (256-color approximations) */
-#define MACCHIATO_ROSEWATER 224
-#define MACCHIATO_FLAMINGO  217
-#define MACCHIATO_PINK      218
-#define MACCHIATO_MAUVE     183
-#define MACCHIATO_RED       210
-#define MACCHIATO_MAROON    181
-#define MACCHIATO_PEACH     216
-#define MACCHIATO_YELLOW    223
-#define MACCHIATO_GREEN     150
-#define MACCHIATO_TEAL      116
-#define MACCHIATO_SKY       117
-#define MACCHIATO_SAPPHIRE  75
-#define MACCHIATO_BLUE      111
-#define MACCHIATO_LAVENDER  147
-#define MACCHIATO_TEXT      189
-#define MACCHIATO_SUBTEXT1  146
-#define MACCHIATO_OVERLAY2  102
-#define MACCHIATO_SURFACE0  237
-#define MACCHIATO_BASE      236
-
-/* Flag for 256-color support */
-static bool use_256_colors = false;
-
-/*
- * Setup gradient using hand-picked 256-color palette codes.
- *
- * The 6x6x6 color cube has limited resolution, so we directly specify
- * distinct color codes that create a smooth Catppuccin-style gradient:
- * green → teal → yellow → peach → salmon → red
- *
- * Each color is chosen to be visually distinct in the 256-color palette.
- */
-static void setup_gradient_colors(void)
-{
-    if (!use_256_colors) {
-        /* Fallback for 8-color terminals */
-        for (int i = 0; i < GRADIENT_STEPS; i++) {
-            short color;
-            int segment = (i * 4) / GRADIENT_STEPS;
-            switch (segment) {
-                case 0: color = COLOR_GREEN; break;
-                case 1: color = COLOR_YELLOW; break;
-                case 2: color = COLOR_YELLOW; break;
-                default: color = COLOR_RED; break;
-            }
-            init_pair(PAIR_GRADIENT_BASE + i, COLOR_BLACK, color);
-        }
-        return;
-    }
-
-    /*
-     * Hand-picked 256-color codes for a 12-step Catppuccin-style gradient.
-     * These are carefully chosen to be distinct colors in the palette:
-     *
-     * 114: #87d787 - soft green (Catppuccin green)
-     * 115: #87d7af - green-teal
-     * 116: #87d7d7 - teal (Catppuccin teal)
-     * 151: #afd7af - pale green-yellow
-     * 186: #d7d787 - muted yellow
-     * 222: #ffd787 - warm yellow (Catppuccin yellow)
-     * 223: #ffd7af - cream/peach light
-     * 216: #ffaf87 - peach (Catppuccin peach)
-     * 217: #ffafaf - salmon/coral
-     * 211: #ff87af - pink-salmon
-     * 210: #ff8787 - soft red (Catppuccin red)
-     * 174: #d78787 - muted red/maroon
-     */
-    static const short gradient_colors[12] = {
-        114,  /* #87d787 - soft green */
-        115,  /* #87d7af - green-teal */
-        116,  /* #87d7d7 - teal */
-        151,  /* #afd7af - pale sage */
-        186,  /* #d7d787 - muted yellow */
-        222,  /* #ffd787 - warm yellow */
-        223,  /* #ffd7af - cream */
-        216,  /* #ffaf87 - peach */
-        217,  /* #ffafaf - salmon */
-        211,  /* #ff87af - pink */
-        210,  /* #ff8787 - soft red */
-        174,  /* #d78787 - muted maroon */
-    };
-    int num_colors = 12;
-
-    for (int i = 0; i < GRADIENT_STEPS; i++) {
-        /* Map gradient step to one of our 12 hand-picked colors */
-        int color_index = (i * (num_colors - 1)) / (GRADIENT_STEPS - 1);
-        if (color_index >= num_colors) color_index = num_colors - 1;
-
-        init_pair(PAIR_GRADIENT_BASE + i, COLOR_BLACK, gradient_colors[color_index]);
-    }
-}
 
 static void setup_colors(ColorTheme theme)
 {
     start_color();
     use_default_colors();
 
-    /* Check for 256-color support */
-    use_256_colors = (COLORS >= 256);
-
-    if (use_256_colors) {
-        /* Use rich Catppuccin colors for UI elements */
-        short text, border, title, digits, alert_fg, dim, surface;
-
-        switch (theme) {
-            case THEME_MOCHA:
-                text = MOCHA_TEXT;
-                border = MOCHA_LAVENDER;
-                title = MOCHA_MAUVE;
-                digits = MOCHA_LAVENDER;
-                alert_fg = MOCHA_RED;
-                dim = MOCHA_OVERLAY2;
-                surface = MOCHA_SURFACE0;
-                break;
-
-            case THEME_LATTE:
-                text = LATTE_TEXT;
-                border = LATTE_LAVENDER;
-                title = LATTE_MAUVE;
-                digits = LATTE_LAVENDER;
-                alert_fg = LATTE_RED;
-                dim = LATTE_OVERLAY2;
-                surface = LATTE_SURFACE0;
-                break;
-
-            case THEME_FRAPPE:
-                text = FRAPPE_TEXT;
-                border = FRAPPE_LAVENDER;
-                title = FRAPPE_MAUVE;
-                digits = FRAPPE_LAVENDER;
-                alert_fg = FRAPPE_RED;
-                dim = FRAPPE_OVERLAY2;
-                surface = FRAPPE_SURFACE0;
-                break;
-
-            case THEME_MACCHIATO:
-            default:
-                text = MACCHIATO_TEXT;
-                border = MACCHIATO_LAVENDER;
-                title = MACCHIATO_MAUVE;
-                digits = MACCHIATO_LAVENDER;
-                alert_fg = MACCHIATO_RED;
-                dim = MACCHIATO_OVERLAY2;
-                surface = MACCHIATO_SURFACE0;
-                break;
-        }
-
-        init_pair(PAIR_NORMAL, text, -1);
-        init_pair(PAIR_BORDER, border, -1);
-        init_pair(PAIR_TITLE, title, -1);
-        init_pair(PAIR_DIGITS, digits, -1);
-        init_pair(PAIR_PROGRESS, dim, surface);
-        init_pair(PAIR_ALERT, alert_fg, -1);
-        init_pair(PAIR_DIM, dim, -1);
-    } else {
-        /* Fallback to 8-color mode */
-        short fg;
-        switch (theme) {
-            case THEME_MOCHA:
-                fg = COLOR_GREEN;
-                break;
-            case THEME_LATTE:
-                fg = COLOR_WHITE;
-                break;
-            case THEME_FRAPPE:
-                fg = COLOR_CYAN;
-                break;
-            case THEME_MACCHIATO:
-            default:
-                fg = COLOR_MAGENTA;
-                break;
-        }
-
-        init_pair(PAIR_NORMAL, fg, -1);
-        init_pair(PAIR_BORDER, fg, -1);
-        init_pair(PAIR_TITLE, fg, -1);
-        init_pair(PAIR_DIGITS, fg, -1);
-        init_pair(PAIR_PROGRESS, COLOR_BLACK, fg);
-        init_pair(PAIR_ALERT, COLOR_RED, -1);
-        init_pair(PAIR_DIM, COLOR_BLACK, -1);
+    short fg;
+    switch (theme) {
+        case THEME_GREEN:
+            fg = COLOR_GREEN;
+            break;
+        case THEME_AMBER:
+            fg = COLOR_YELLOW;
+            break;
+        case THEME_CYAN:
+            fg = COLOR_CYAN;
+            break;
+        case THEME_WHITE:
+            fg = COLOR_WHITE;
+            break;
+        case THEME_PURPLE:
+            fg = COLOR_MAGENTA;
+            break;
+        case THEME_RED:
+            fg = COLOR_RED;
+            break;
+        default:
+            fg = COLOR_GREEN;
+            break;
     }
 
-    /* Setup gradient colors (works for both 256 and 8 color modes) */
-    setup_gradient_colors();
+    init_pair(PAIR_NORMAL, fg, -1);
+    init_pair(PAIR_BORDER, fg, -1);
+    init_pair(PAIR_TITLE, fg, -1);
+    init_pair(PAIR_DIGITS, fg, -1);
+    init_pair(PAIR_PROGRESS, COLOR_BLACK, fg);
+    init_pair(PAIR_ALERT, COLOR_RED, -1);
+    init_pair(PAIR_DIM, COLOR_BLACK, -1);
 }
 
 int ui_init(UIContext *ctx, ColorTheme theme)
@@ -303,6 +89,9 @@ void ui_cleanup(void)
 
 void ui_handle_resize(UIContext *ctx)
 {
+    /* Standard ncurses resize pattern: endwin/refresh reinitializes the screen */
+    endwin();
+    refresh();
     getmaxyx(stdscr, ctx->term_height, ctx->term_width);
     clear();
     ctx->needs_redraw = true;
@@ -390,44 +179,32 @@ static void draw_time(UIContext *ctx, int seconds)
 
 static void draw_progress_bar(UIContext *ctx, int progress)
 {
-    int bar_width = ctx->term_width - 20;
+    /* Match width to digit display */
+    int spacing = 2;
+    int bar_width = (4 * digit_width()) + colon_width() + (3 * spacing);
     int bar_y = ctx->term_height / 2 + 5;
     int bar_x = (ctx->term_width - bar_width) / 2;
 
     int filled = (progress * bar_width) / 100;
 
-    /* Calculate the 40% threshold position in the bar */
-    int green_threshold = (40 * bar_width) / 100;
-
-    mvprintw(bar_y, bar_x - 1, "[");
-
-    /* Draw progress bar with green dominant for first 40%, then gradient */
+    /* Draw filled portion with solid theme color (no brackets) */
+    attron(COLOR_PAIR(PAIR_PROGRESS));
     for (int i = 0; i < filled; i++) {
-        int gradient_index;
-
-        if (i < green_threshold) {
-            /* First 40%: stay green */
-            gradient_index = 0;
-        } else {
-            /* After 40%: map remaining 60% to full gradient range */
-            int pos_in_gradient = i - green_threshold;
-            int gradient_width = bar_width - green_threshold;
-            gradient_index = (pos_in_gradient * (GRADIENT_STEPS - 1)) / gradient_width;
-            if (gradient_index >= GRADIENT_STEPS) gradient_index = GRADIENT_STEPS - 1;
-        }
-
-        attron(COLOR_PAIR(PAIR_GRADIENT_BASE + gradient_index));
         mvaddch(bar_y, bar_x + i, ' ');
-        attroff(COLOR_PAIR(PAIR_GRADIENT_BASE + gradient_index));
     }
+    attroff(COLOR_PAIR(PAIR_PROGRESS));
 
+    /* Draw unfilled portion */
     attron(COLOR_PAIR(PAIR_DIM));
     for (int i = filled; i < bar_width; i++) {
         mvaddch(bar_y, bar_x + i, ACS_CKBOARD);
     }
     attroff(COLOR_PAIR(PAIR_DIM));
 
-    mvprintw(bar_y, bar_x + bar_width, "] %3d%%", progress);
+    /* Percentage in theme color */
+    attron(COLOR_PAIR(PAIR_NORMAL));
+    mvprintw(bar_y, bar_x + bar_width + 2, "%3d%%", progress);
+    attroff(COLOR_PAIR(PAIR_NORMAL));
 }
 
 static void draw_header(UIContext *ctx, TimerContext *timer)
@@ -463,7 +240,7 @@ static void draw_footer(UIContext *ctx)
     attroff(COLOR_PAIR(PAIR_BORDER));
 
     attron(COLOR_PAIR(PAIR_NORMAL));
-    const char *help = "[S]tart  [P]ause  [R]eset  [C]onfig  [Q]uit";
+    const char *help = "[SPACE] Start/Pause  [R]eset  [C]onfig  [Q]uit";
     mvprintw(y, (ctx->term_width - (int)strlen(help)) / 2, "%s", help);
     attroff(COLOR_PAIR(PAIR_NORMAL));
 }
@@ -482,8 +259,9 @@ void ui_draw(UIContext *ctx, TimerContext *timer)
     int remaining = timer_get_remaining(timer);
     int progress = timer_get_progress(timer);
 
-    /* Display task name above timer */
-    int task_y = (ctx->term_height - digit_height()) / 2 - 4;
+    /* Display task name centered between header (y=4) and digits */
+    int digit_start_y = (ctx->term_height - digit_height()) / 2 - 2;
+    int task_y = 4 + (digit_start_y - 4) / 2;  /* Centered between header and digits */
     attron(COLOR_PAIR(PAIR_NORMAL));
     if (timer->current_task[0] != '\0') {
         char task_label[300];
@@ -498,13 +276,16 @@ void ui_draw(UIContext *ctx, TimerContext *timer)
     draw_time(ctx, remaining);
     draw_progress_bar(ctx, progress);
 
-    /* Show total completed cycles */
+    /* Show total completed cycles - centered between progress bar and footer */
+    int progress_bar_y = ctx->term_height / 2 + 5;
+    int footer_y = ctx->term_height - 3;  /* Line above footer text */
+    int cycles_y = progress_bar_y + (footer_y - progress_bar_y) / 2;
+
     char cycles_str[32];
     snprintf(cycles_str, sizeof(cycles_str), "Total completed: %d",
              timer->total_cycles_completed);
     attron(COLOR_PAIR(PAIR_NORMAL));
-    mvprintw(ctx->term_height / 2 + 7,
-             (ctx->term_width - (int)strlen(cycles_str)) / 2, "%s", cycles_str);
+    mvprintw(cycles_y, (ctx->term_width - (int)strlen(cycles_str)) / 2, "%s", cycles_str);
     attroff(COLOR_PAIR(PAIR_NORMAL));
 
     refresh();
@@ -716,7 +497,7 @@ void ui_draw_config_menu(UIContext *ctx, AppConfig *config, int selected_item, b
         } else if (i == 3) {
             snprintf(value_str, sizeof(value_str), "%d", config->timer.cycles_before_long);
         } else if (i == 4) {
-            const char *theme_names[] = {"mocha", "latte", "frappe", "macchiato"};
+            const char *theme_names[] = {"green", "amber", "cyan", "white", "purple", "red"};
             snprintf(value_str, sizeof(value_str), "%s", theme_names[config->theme]);
         }
 
@@ -768,10 +549,10 @@ int ui_handle_config_input(int ch, AppConfig *config, int *selected_item, bool *
         } else if (*selected_item == 4) {  /* Theme field */
             if (ch == KEY_LEFT || ch == 'h') {
                 if (config->theme > 0) config->theme--;
-                else config->theme = THEME_MACCHIATO;
+                else config->theme = THEME_RED;
             } else if (ch == KEY_RIGHT || ch == 'l') {
-                if (config->theme < THEME_MACCHIATO) config->theme++;
-                else config->theme = THEME_MOCHA;
+                if (config->theme < THEME_RED) config->theme++;
+                else config->theme = THEME_GREEN;
             }
         }
     } else {
